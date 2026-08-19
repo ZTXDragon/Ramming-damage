@@ -1,0 +1,186 @@
+// ZTX Ramming Damage — runtime tunables. Edit values, restart the game.
+// Lines starting with // are ignored. Trailing // comments are stripped.
+
+
+// =====================================================================
+// THRESHOLD GATES
+// =====================================================================
+// Relative speed (m/s) required for a body to start ramming and to keep
+// ramming once active. Mass-tier tables (below) can override per body.
+
+MinClosingSpeed = 50
+MinSustainSpeed = 5
+
+// Ticks after losing all contacts that the body still uses MinSustainSpeed.
+// Cosmoteer physics runs at 30Hz, so 30 ticks = 1 second.
+
+SustainGraceTicks = 30
+
+// ---- Mass-tier overrides (optional) ----
+// Per-mass speed thresholds. Format: "MassCap:Speed, ..." ascending; mass
+// in tonnes. Lookup picks the first tier with MassCap >= body.Mass; bodies
+// above the highest cap fall back to the flat Min*Speed values.
+//
+// Default: bodies <=50t (debris, fighters) ram at any closing speed;
+// everything else uses MinClosingSpeed. The tier tables are provided
+// pre-tuned but disabled.
+
+MassClosingSpeedTableEnabled = false
+MassClosingSpeedTiers        = 50:0
+
+MassSustainSpeedTableEnabled = false
+MassSustainSpeedTiers        = 50:0
+
+//Pair-level gate combines both bodies' tiers via MassTierPairRule
+//(0 = smaller body wins / permissive, 1 = larger body wins / restrictive).
+
+MassTierPairRule = 0
+
+
+// =====================================================================
+// DAMAGE
+// =====================================================================
+// Pen-ratio: each side takes MaxHp * (other-side pen / max pen). Equal pen
+// pairs mutually destruct in one HIT.
+
+// Floor for the pen value used in the ratio (avoids 0/0 for pen-0 parts).
+
+PenFloor = 0.5
+
+
+// =====================================================================
+// PUSHBACK
+// =====================================================================
+// Each HIT spawns a contact-point impulse driven by applied damage. Linear
+// + angular response are produced together at the contact point.
+
+// Master energy knob: impulse magnitude (tonne*m/s) per HP of damage at full
+// head-on. Raise to decrease overall ramming effectiveness, lower to increase.
+
+HpToEnergy = 0.5
+
+// Per-axis split of each impulse. 1.0 = exact Box2D ApplyLinearImpulse
+// behavior.
+
+LinearMultiplier   = 1.0
+RotationMultiplier = 1.0
+
+// Formula for impulse magnitude distribution:
+//   0 = Asymmetric  (damage to B drives push on A and vice versa)
+//   1 = NewtonSum   (Newton's 3rd: equal/opposite, mag = total damage / 2)
+
+PushbackFormula = 1
+
+// Head-on bonus. cos(velA, velB) < 0 → factor scales toward this value
+// quadratically in h = -cos. Lower factor = more HITs per collision
+// (empirically calibrated; the system-level relationship with the speed
+// gate + sustain grace is non-linear, so trust the measured values below
+// over any naive read of the formula):
+//   0.71 = KE-realistic ~4x head-on damage (recommended, both modes).
+//   1.0  = no extra amplification (NewtonSum still gets ~3x natural).
+//   0.5  = over-amplifies in NewtonSum (~6x); cinematic.
+
+SlowdownHeadOnFactor = 0.71
+
+// ---- Per-body impulse reduction (optional) ----
+// Scales the impulse a body receives based on its OWN mass; the partner is
+// unaffected. Linear interp between (MassCap, Multiplier) control points;
+// below the first cap → first multiplier, above the last cap → last
+// multiplier.
+//
+// Default: dampens light bodies (debris, fighters) so they don't get YEETED
+// after destroying a single part.
+
+ImpulseReductionTableEnabled = true
+ImpulseReductionTiers        = 5:0.05, 500:1.0
+
+
+// =====================================================================
+// PER-TICK FILTERS
+// =====================================================================
+// Filters that suppress contacts within a single tick. Each is a single
+// boolean toggle.
+
+// Each Part takes at most one HIT per tick. First contact involving a Part
+// claims tick-slots for both parts; later contacts skip. Smooths multi-HIT
+// spikes from wedge-front geometry.
+
+PerPartSuppression = true
+
+
+// Within a tick, each body's high-pen parts shadow damage on its lower-pen
+// INTERIOR parts (parts with no cell-face on the ship's exterior surface).
+// Prevents the rammer's internals from dying alongside its armor when
+// ramming geometry clips through hull. Exterior parts never shadow, so
+// arrow-ship designs ram with their full hull, not just the tip.
+
+PenPriority = true
+
+
+// Skip damage when either part is already at 0 HP.
+
+DeadPartGate = true
+
+
+
+// =====================================================================
+// RAMMING GATES
+// =====================================================================
+// Only consulted when UseRamDamageGates = true. With it false, everything
+// is rammable and these are ignored.
+
+UseRamDamageGates = true
+
+// These gates are independent of the game's own Friendly Fire option. That
+// setting governs weapons; these govern ramming. Turning FF on in-game does
+// not make allies rammable -- set RamDamageAllies = true for that.
+//
+// Each gate is checked against the category of the COLLISION PAIR, and applies
+// to both hulls. If you're allowed to ram an asteroid, the asteroid is equally
+// allowed to damage you -- a collision damages both sides or neither.
+//
+// Categories are decided in this order, first match wins:
+//   Self      - both ships have the same owner
+//   Asteroid  - asteroids and megaroids
+//   Junk      - wreckage, derelicts, abandoned ships
+//   Neutral   - FTL gates and faction beacons
+//   Enemy     - anyone hostile to you
+//   Ally      - allies
+
+RamDamageSelf      = false
+RamDamageAsteroids = true
+RamDamageJunk      = true
+RamDamageNeutral   = true
+RamDamageEnemies   = true
+RamDamageAllies    = false
+
+// =====================================================================
+// STALL MECHANIC
+// =====================================================================
+// Single-tick velocity freeze every N ticks, where
+//     N = floor(MaxPhaseLayers / (speed * dt - DestroyRatePerTick))
+// Caps cumulative phase-through to ~MaxPhaseLayers tiles per cycle.
+// Invisible at normal playback speed.
+
+StallEnabled          = false
+MaxPhaseLayers        = 3      // Tiles of phase budget per cycle.
+StallDisableSpeed     = 30     // m/s floor; no stall fires below this speed.
+DestroyRatePerTick    = 1      // Assumed layers killed per tick.
+StallGraceTicks       = 2      // Ticks after last contact before stall drops.
+StallDisableAboveMass = 100000 // Tonnes ceiling; bodies at or above never
+                               // stall (heavy ships look weird being yanked
+                               // to a stop, and can absorb 10+ layers of
+                               // phase without issue). Bodies BELOW the cap
+                               // but currently in contact with a body at or
+                               // above are also exempted — keeps a light
+                               // ship from visibly freezing while touching
+                               // a capital that keeps moving. 0 = no cap.
+
+
+// =====================================================================
+// DEBUG
+// =====================================================================
+
+// Per-HIT and per-tick log lines. Heavy volume.
+
+DebugLog = false

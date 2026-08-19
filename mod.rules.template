@@ -1,0 +1,18 @@
+ID = ztx.ramming_damage
+
+Name = "Ramming Damage"
+
+CompatibleGameVersions = ["0.30.4"]
+
+Version = 2.2
+
+ModifiesGameplay = true
+
+Author = "ZTX"
+
+Description = "Adds ship-vs-ship collision damage. Tunable via config.rules inside "\
+              "the mod folder (right-click the mod, Open Mod Folder, edit "\
+              "config.rules, restart the game).\n\n"\
+              "MULTIPLAYER: every player needs this mod enabled with matching "\
+              "config.rules values. Mismatched clients desync on the first ram.\n\n"\
+              "Requires YAML (Yet Another Mod Loader) at runtime."

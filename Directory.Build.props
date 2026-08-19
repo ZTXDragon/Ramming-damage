@@ -1,0 +1,17 @@
+<Project>
+  <!--
+    Directory.Build.props is imported by MSBuild BEFORE Microsoft.Common.props,
+    so paths set here apply cleanly to both NuGet's intermediate output (obj/)
+    and the compiler's final output (bin/).
+
+    Redirects both OUTSIDE the Cosmoteer Mods folder because Cosmoteer's mod
+    scanner walks the install folder recursively for DLLs. Without this, a
+    build run from source/ would put bin/Release/...ZTX.RammingDamage.dll
+    inside Mods\ztx.ramming_damage\, and the game emits "Two or more mods
+    have the same library ZTX.RammingDamage.dll" at load.
+  -->
+  <PropertyGroup>
+    <BaseOutputPath>$(LOCALAPPDATA)\ZTX.RammingDamage.Build\bin\</BaseOutputPath>
+    <BaseIntermediateOutputPath>$(LOCALAPPDATA)\ZTX.RammingDamage.Build\obj\</BaseIntermediateOutputPath>
+  </PropertyGroup>
+</Project>

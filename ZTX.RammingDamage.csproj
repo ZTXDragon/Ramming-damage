@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <AssemblyName>ZTX.RammingDamage</AssemblyName>
+    <RootNamespace>ZTX.RammingDamage</RootNamespace>
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+    <NoWarn>$(NoWarn);CA1416</NoWarn>
+
+    <CosmoteerBin
+      Condition="'$(CosmoteerBin)' == ''">D:\SteamLibrary\steamapps\common\Cosmoteer\Bin</CosmoteerBin>
+    <YamlModDir
+      Condition="'$(YamlModDir)' == ''">D:\SteamLibrary\steamapps\workshop\content\799600\3577650065</YamlModDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="Cosmoteer">
+      <HintPath>$(CosmoteerBin)\Cosmoteer.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="HalflingCore">
+      <HintPath>$(CosmoteerBin)\HalflingCore.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="0Harmony">
+      <HintPath>$(YamlModDir)\0Harmony.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Krafs.Publicizer" Version="2.3.0" PrivateAssets="all" />
+    <Publicize Include="Cosmoteer" />
+    <Publicize Include="HalflingCore" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="_backups/**" />
+    <None Remove="_backups/**" />
+    <Compile Remove="dist/**" />
+    <None Remove="dist/**" />
+  </ItemGroup>
+
+</Project>

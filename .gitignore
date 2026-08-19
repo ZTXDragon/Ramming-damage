@@ -1,0 +1,17 @@
+# Build output. Directory.Build.props redirects these to %LOCALAPPDATA%,
+# but keep the ignore in case someone builds without it.
+bin/
+obj/
+
+# Only README.md is published with the source.
+*.md
+!README.md
+
+# IDE / editor
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.swp
+.DS_Store
